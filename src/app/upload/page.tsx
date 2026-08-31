@@ -2,17 +2,17 @@
 
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { TelegramStorage } from "@/lib/telegram";
 import { CompressionEngine } from "@/lib/compression";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function UploadPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -20,7 +20,7 @@ export default function UploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0 || !isAuthenticated) return;
+    if (!files || files.length === 0 || !session) return;
     const file = files[0];
     setUploading(true);
     setProgress(10);
@@ -30,7 +30,6 @@ export default function UploadPage() {
       const compression = new CompressionEngine();
 
       setProgress(30);
-      // Compress
       const type = file.type.startsWith("video/")
         ? "video"
         : file.type.startsWith("image/")
@@ -39,7 +38,6 @@ export default function UploadPage() {
       const { compressedBlob, meta } = await compression.compress(file, type, 70);
 
       setProgress(60);
-      // Upload to Telegram
       const uploadResult = await telegram.uploadFile(compressedBlob, file.name);
 
       setProgress(100);
@@ -59,7 +57,7 @@ export default function UploadPage() {
       setUploading(false);
       setTimeout(() => setProgress(0), 500);
     }
-  }, [isAuthenticated]);
+  }, [session]);
 
   const onDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -82,6 +80,23 @@ export default function UploadPage() {
     e.stopPropagation();
     setDragActive(false);
   }, []);
+
+  if (status === "loading") {
+    return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900 p-6">
+        <Card className="w-full max-w-md bg-slate-900/60 border-slate-700 backdrop-blur-xl shadow-2xl shadow-black/40">
+          <CardContent className="p-8 text-center space-y-4">
+            <h2 className="text-xl font-bold text-white">Not Authenticated</h2>
+            <Button onClick={() => router.push("/auth/login")}>Sign In with Google</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">

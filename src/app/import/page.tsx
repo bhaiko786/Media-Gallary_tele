@@ -2,24 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { GoogleImportService } from "@/lib/google-import";
-import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export default function ImportPage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { data: session, status } = useSession();
   const [tab, setTab] = useState<"drive" | "photos">("drive");
   const [items, setItems] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [importing, setImporting] = useState(false);
   const [progressText, setProgressText] = useState("");
 
-  const service = new GoogleImportService();
+  const service = new GoogleImportService(session?.accessToken);
 
   useEffect(() => {
+    if (!session?.accessToken) return;
     async function load() {
       if (tab === "drive") {
         const data = await service.listDriveFiles();
@@ -30,7 +31,7 @@ export default function ImportPage() {
       }
     }
     load();
-  }, [tab]);
+  }, [tab, session?.accessToken]);
 
   const handleImport = async () => {
     setImporting(true);
@@ -46,7 +47,11 @@ export default function ImportPage() {
     }, 800);
   };
 
-  if (!isAuthenticated) {
+  if (status === "loading") {
+    return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900">
         <Card className="bg-slate-900/60 border-slate-700 backdrop-blur-xl">

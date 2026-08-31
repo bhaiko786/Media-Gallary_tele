@@ -1,21 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/hooks/use-auth";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 
 export default function DashboardPage() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
   const [files] = useState([
     { id: "1", name: "demo_video.mp4", type: "video", size: 15400000, compressedSize: 9240000, createdAt: "2025-08-30T10:00:00Z" },
     { id: "2", name: "photo_1.jpg", type: "photo", size: 3200000, compressedSize: 960000, createdAt: "2025-08-30T09:30:00Z" },
     { id: "3", name: "document.pdf", type: "file", size: 2048000, compressedSize: 1433600, createdAt: "2025-08-29T16:00:00Z" },
   ]);
 
-  if (!isAuthenticated) {
+  if (status === "loading") {
+    return <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 to-slate-900">
         <Card className="bg-slate-900/60 border-slate-700 backdrop-blur-xl">
@@ -32,7 +35,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-      {/* Header */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/50 border-b border-slate-800/60">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -53,20 +55,18 @@ export default function DashboardPage() {
             <Link href="/import">
               <Button size="sm" variant="outline" className="border-slate-600 hover:bg-slate-800 rounded-full text-xs">Import</Button>
             </Link>
-            <Button size="sm" variant="outline" className="border-slate-600 hover:bg-slate-800 rounded-full text-xs" onClick={logout}>Logout</Button>
+            <Button size="sm" variant="outline" className="border-slate-600 hover:bg-slate-800 rounded-full text-xs" onClick={() => signOut({ callbackUrl: "/auth/login" })}>Logout</Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* Welcome */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900/40 to-cyan-900/30 border border-blue-800/30 p-6 sm:p-8 backdrop-blur-sm">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -translate-y-1/3 translate-x-1/4 blur-3xl" />
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Welcome back, {user?.name || "User"}</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Welcome back, {session.user?.name || "User"}</h2>
           <p className="text-slate-400 max-w-lg">Your files are stored via the Telegram Bot API, compressed on upload, and can be restored to original quality when viewed.</p>
         </section>
 
-        {/* Stats */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="bg-slate-900/40 border-slate-700/50 backdrop-blur-sm">
             <CardContent className="p-5">
@@ -88,7 +88,6 @@ export default function DashboardPage() {
           </Card>
         </section>
 
-        {/* Files Table */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold tracking-tight">Your Media</h3>
