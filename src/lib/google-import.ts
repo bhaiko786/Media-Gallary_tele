@@ -32,12 +32,20 @@ export class GoogleImportService {
           Accept: "application/json",
         },
       });
-      const data = await res.json();
-      return (data.files || []).map((f: any) => ({
+      interface DriveFile {
+        id: string;
+        name: string;
+        mimeType: string;
+        size?: string | number;
+        webViewLink?: string;
+        thumbnailLink?: string;
+      }
+      const data: { files?: DriveFile[] } = await res.json();
+      return (data.files || []).map((f) => ({
         id: f.id,
         name: f.name,
         mimeType: f.mimeType,
-        size: f.size ? parseInt(f.size) : 0,
+        size: f.size ? parseInt(String(f.size), 10) : 0,
         webViewLink: f.webViewLink,
         thumbnailLink: f.thumbnailLink,
       }));
@@ -59,8 +67,8 @@ export class GoogleImportService {
           Authorization: `Bearer ${this.accessToken}`,
         },
       });
-      const data = await res.json();
-      return (data.mediaItems || []).map((m: any) => ({
+      const data: { mediaItems?: Array<{ id: string; filename?: string; baseUrl?: string }> } = await res.json();
+      return (data.mediaItems || []).map((m) => ({
         id: m.id,
         name: m.filename || `Photo ${m.id}`,
         mimeType: "image/jpeg",

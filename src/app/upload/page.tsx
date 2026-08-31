@@ -10,13 +10,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
+interface UploadResult {
+  originalName?: string;
+  originalSize?: number;
+  compressedSize?: number;
+  ratio?: number;
+  telegramFileId?: string;
+  telegramMessageId?: number;
+  type?: "video" | "photo" | "file";
+  error?: string;
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<UploadResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = useCallback(async (files: FileList | null) => {
@@ -50,9 +61,10 @@ export default function UploadPage() {
         telegramMessageId: uploadResult.messageId,
         type,
       });
-    } catch (e: any) {
+    } catch (e) {
       console.error("Upload failed:", e);
-      setResult({ error: e.message || "Upload failed" });
+      const message = e instanceof Error ? e.message : "Upload failed";
+      setResult({ error: message });
     } finally {
       setUploading(false);
       setTimeout(() => setProgress(0), 500);
@@ -178,11 +190,11 @@ export default function UploadPage() {
                   </div>
                   <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60">
                     <div className="text-xs text-slate-500 mb-1">Original Size</div>
-                    <div className="text-white font-medium">{(result.originalSize / (1024 * 1024)).toFixed(1)} MB</div>
+                    <div className="text-white font-medium">{((result.originalSize ?? 0) / (1024 * 1024)).toFixed(1)} MB</div>
                   </div>
                   <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60">
                     <div className="text-xs text-slate-500 mb-1">Compressed Size</div>
-                    <div className="text-emerald-400 font-medium">{(result.compressedSize / (1024 * 1024)).toFixed(1)} MB</div>
+                    <div className="text-emerald-400 font-medium">{((result.compressedSize ?? 0) / (1024 * 1024)).toFixed(1)} MB</div>
                   </div>
                   <div className="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60 col-span-2">
                     <div className="text-xs text-slate-500 mb-1">Storage Backend</div>

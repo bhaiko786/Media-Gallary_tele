@@ -48,7 +48,7 @@ export class TelegramStorage {
 
     try {
       const form = new FormData();
-      const blob = file instanceof Blob ? file : new Blob([file]);
+      const blob = file instanceof Blob ? file : new Blob([new Uint8Array(file)]);
       form.append("document", blob, filename);
       form.append("chat_id", this.chatId);
       if (caption) form.append("caption", caption);
@@ -84,7 +84,7 @@ export class TelegramStorage {
     }
     try {
       const form = new FormData();
-      const blob = photo instanceof Blob ? photo : new Blob([photo]);
+      const blob = photo instanceof Blob ? photo : new Blob([new Uint8Array(photo)]);
       form.append("photo", blob);
       form.append("chat_id", this.chatId);
       if (caption) form.append("caption", caption);

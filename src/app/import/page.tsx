@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { GoogleImportService } from "@/lib/google-import";
+import { GoogleImportService, type GoogleImportItem } from "@/lib/google-import";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +12,15 @@ export default function ImportPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [tab, setTab] = useState<"drive" | "photos">("drive");
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<GoogleImportItem[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [importing, setImporting] = useState(false);
   const [progressText, setProgressText] = useState("");
 
-  const service = new GoogleImportService(session?.accessToken);
+  const service = useMemo(
+    () => new GoogleImportService(session?.accessToken),
+    [session?.accessToken]
+  );
 
   useEffect(() => {
     if (!session?.accessToken) return;
@@ -31,7 +34,7 @@ export default function ImportPage() {
       }
     }
     load();
-  }, [tab, session?.accessToken]);
+  }, [tab, session?.accessToken, service]);
 
   const handleImport = async () => {
     setImporting(true);
@@ -108,7 +111,7 @@ export default function ImportPage() {
               </div>
             )}
             <div className="divide-y divide-slate-800/40">
-              {items.map((item: any) => (
+              {items.map((item) => (
                 <label
                   key={item.id}
                   className="flex items-center gap-3 px-1 py-3 hover:bg-slate-800/30 rounded-xl cursor-pointer transition-colors"

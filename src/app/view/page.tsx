@@ -2,11 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { TelegramStorage } from "@/lib/telegram";
-import { CompressionEngine } from "@/lib/compression";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+
+interface FileInfo {
+  id: string;
+  name: string;
+  type: "video" | "photo" | "file";
+  originalSize: number;
+  compressedSize: number;
+}
 
 export default function ViewPage() {
   const router = useRouter();
@@ -14,7 +21,7 @@ export default function ViewPage() {
   const { isAuthenticated } = useAuth();
   const [enhanced, setEnhanced] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [fileInfo, setFileInfo] = useState<any>(null);
+  const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
 
   useEffect(() => {
     const id = params.get("id");
